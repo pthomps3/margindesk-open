@@ -1,0 +1,35 @@
+.shell .business {
+  display: grid;
+  grid-template-columns: auto minmax(0,1fr) auto;
+  flex: 0 0 auto;
+  height: auto;
+  min-height: 58px;
+  padding: 10px;
+  gap: 9px;
+  white-space: normal;
+  line-height: 1.35;
+}
+.business > span:nth-child(2), .profile > span, .stat h2, .card h3, .dialog h2, .import-row, .report-summary dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.business small { margin-top: 3px; line-height: 1.35; }
+.shell aside > nav, .shell .sidebottom, .shell .brand { flex-shrink: 0; }
+.stat, .two > *, .formgrid > *, .plan-card, .dialog, .cardhead > * { min-width: 0; }
+.appearance-control { display: inline-flex; margin: 0; align-items: center; gap: 5px; font-size: 12px; }
+.appearance-control select, .shell .appearance-control select { width: auto; min-height: 34px; padding: 4px 6px; font-size: 13px; }
+.topbar, .publicnav { height:auto; min-height:66px; flex-wrap:wrap; gap:8px; }
+:root[data-theme="dark"] { color-scheme:dark; background:#13201d; color:#e8f1ec; }
+[data-theme="dark"] :is(body,.public,.shell,.content,.landing-page,.pricing-page,.calculator-page) {background:#13201d;color:#e8f1ec}
+[data-theme="dark"] :is(aside,.topbar,.publicnav,.card,.stat,.dialog,.formcard,.plan-card,.landing-plan,.job-example,.example-revenue,.example-heading,.example-costs,.calc-entry,.calc-live,.calc-breakdown,.calc-profit-summary,.landing-workflow,.workflow-grid article,.pricing-faq details,.report-summary,.import-panel,.calc-adjustments,.calc-fields,.calc-entry-meta,.landing-footer) {background:#1c2c26;color:#edf5ef;border-color:#3b5147}
+[data-theme="dark"] :is(.setup-banner,.preview-strip,.upgrade,.entry-result,.import-note,.business-strip,.landing-clarity,.landing-origin,.landing-final,.calculator-invite,.calc-example-strip,.calc-explainer,.calc-footer,.example-check,.example-switch,.calc-assurance,.calc-extra-note,.calc-result-top,.featured-plan,.example-profit,.sample-dot,.pill,.avatar,.count,thead,.pricing-foot,.pricing-kicker,.example-icon,.workflow-icon,.plan-icon) {background:#263e33;color:#cce9cf;border-color:#496254}
+[data-theme="dark"] :is(.shell,.public,.dialog) :is(h1,h2,h3,h4,label,dt,dd,strong,summary,th,td,.brand,.footer-wordmark,.section-heading,.example-revenue,.plan-price,.calc-result-top) {color:#edf5ef}
+[data-theme="dark"] :is(.shell,.public,.dialog) :is(p,small,.eyebrow,.demo,.landing-description,.landing-lead,.example-caption,.landing-assurance,.plan-note,.plan-billing,.navlabel,.beta,.pricing-preview,.example-explainer,.stat>span,.landing-plan-detail,.example-eyebrow) {color:#b8cbbf}
+[data-theme="dark"] :is(button,select,input,textarea,.business-types button) {background:#24392f;color:#e3f0e8;border-color:#4a6556}
+[data-theme="dark"] :is(button:hover,aside nav button.active,.business-types .chosen,.example-switch .selected) {background:#355644;color:#f0fff4}
+[data-theme="dark"] :is(button.primary,.landing-final button.primary,.plan-ribbon,.logo) {background:#a8e2b9;color:#123622;border-color:#a8e2b9}
+[data-theme="dark"] :is(.green,.textbutton,.landing-text-link,.annual-plan-link,.landing-hero h1 em,.landing-final h2 em,.example-profit strong,.calc-profit,.calc-contribution,.profile small) {color:#afe9c2}
+[data-theme="dark"] :is(.warning,.calc-missing,.notice) {background:#423b25;color:#ffebad;border-color:#6c613b}
+[data-theme="dark"] :is(.negative,.danger,.import-error) {color:#ffbbb2;background:#472d2a}
+[data-theme="dark"] :is(.tablewrap,tr,th,td,.toolbar,.profile,.entry-details,.form-section,.report-summary dl>div) {border-color:#40564b}
+@media(max-width:600px){.appearance-control{font-size:11px}.topbar{justify-content:flex-start}.shell .heading button,.publicnav button{white-space:normal}}

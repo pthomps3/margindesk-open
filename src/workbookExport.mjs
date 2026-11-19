@@ -30,7 +30,10 @@ function normalizedValue(value, kind) {
 }
 
 function styleSheet(sheet) {
-  const { name, rows, columns, currency, headerRows = [0], emphasisRows = [], freeze = 1 } = sheet;
+  const { name, rows, currency, headerRows = [0], emphasisRows = [], freeze = 1 } = sheet;
+  const columns = sheet.columns ?? Array.from({
+    length: rows.reduce((max, row) => Math.max(max, row.length), 1),
+  }, () => ({}));
   const widths = columns.map((column, col) => column.width ?? Math.min(42, Math.max(16,
     ...rows.slice(0, 100).map(row => String(row[col]?.value ?? row[col] ?? '').length + 3))));
   const headers = new Set(headerRows);

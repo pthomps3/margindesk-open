@@ -28,11 +28,11 @@ export function estimateCSV(estimate, currency) {
   if (!['USD', 'GBP', 'EUR', 'CAD', 'AUD'].includes(currency)) throw Error('Unsupported currency.');
   const labels = { price: 'Job price', supplies: 'Supplies', labor: 'Worker pay', fees: 'Fees', other: 'Other direct costs', discount: 'Discount', refund: 'Refund' };
   const rows = [['MarginDesk job estimate', 'Amount', 'Currency'],
-    ...Object.entries(labels).map(([key, label]) => [label, (estimate.amounts[key] / 100).toFixed(2), currency]),
-    ['Job revenue', (estimate.revenue / 100).toFixed(2), currency],
-    ['Direct costs', (estimate.direct / 100).toFixed(2), currency],
-    ['Contribution profit', (estimate.profit / 100).toFixed(2), currency],
-    ['Contribution margin', estimate.margin === null ? 'N/A (zero revenue)' : (estimate.margin * 100).toFixed(1) + '%', ''],
+    ...Object.entries(labels).map(([key, label]) => [label, estimate.amounts[key] / 100, currency]),
+    ['Job revenue', estimate.revenue / 100, currency],
+    ['Direct costs', estimate.direct / 100, currency],
+    ['Contribution profit', estimate.profit / 100, currency],
+    ['Contribution margin (%)', estimate.margin === null ? 'N/A (zero revenue)' : Number((estimate.margin * 100).toFixed(1)), ''],
     ['Management estimate before fixed expenses and taxes. Fees are entered as an actual amount retained after any refund.', '', '']];
   return rows.map(row => row.map(csvCell).join(',')).join('\r\n');
 }

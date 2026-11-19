@@ -8,7 +8,8 @@
     const theme = dark ? 'dark' : 'light';
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.colorScheme = theme;
-    document.querySelector('#tab-icon').href = './favicon-' + theme + '.svg';
+    const icon = document.querySelector('#tab-icon');
+    icon.href = icon.dataset[theme] || './favicon-' + theme + '.svg';
     document.querySelector('meta[name="theme-color"]').content = dark ? '#14221e' : '#f8faf6';
   }
   apply();

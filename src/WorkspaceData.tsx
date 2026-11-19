@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { decodeWorkspace, encodeWorkspace } from './localWorkspace';
+import { useRef, useState } from 'react';
+import { encodeWorkspace, readWorkspaceBackup } from './localWorkspace';
 
 type Props = {
   data: unknown;
@@ -15,26 +15,51 @@ type Props = {
 export default function WorkspaceData({
   data, demo, unreadableBackup, download, save, notify, onSample, onReset,
 }: Props) {
-  const [backup, setBackup] = useState<File | null>(null);
-  const [restoring, setRestoring] = useState(false);
+  const [backup, setBackup] = useState<Awaited<ReturnType<typeof readWorkspaceBackup>> | null>(null);
+  const [reading, setReading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
+  const [error, setError] = useState('');
+  const fileInput = useRef<HTMLInputElement>(null);
+  const selection = useRef(0);
+
+  async function preview(file?: File) {
+    const current = ++selection.current;
+    setBackup(null);
+    setConfirmed(false);
+    setError('');
+    setReading(Boolean(file));
+    if (!file) return;
+    try {
+      const candidate = await readWorkspaceBackup(file);
+      if (current === selection.current) setBackup(candidate);
+    } catch (error) {
+      if (current === selection.current) {
+        setError(error instanceof Error ? error.message : 'The backup could not be read.');
+      }
+    } finally {
+      if (current === selection.current) setReading(false);
+    }
+  }
+
+  function clearSelection() {
+    if (fileInput.current) fileInput.current.value = '';
+    void preview();
+  }
 
   async function restore(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!backup) return;
-    const form = event.currentTarget;
-    setRestoring(true);
+    if (!backup || !confirmed || saving) return;
+    setSaving(true);
     try {
-      if (backup.size > 5_000_000) throw new Error('The backup is larger than 5 MB.');
-      const workspace = decodeWorkspace(await backup.text());
-      if (await save(workspace, true)) {
-        form.reset();
-        setBackup(null);
+      if (await save(backup, true)) {
+        clearSelection();
         notify('Backup restored.');
       }
     } catch (error) {
-      notify(error instanceof Error ? error.message : 'The backup could not be read.');
+      setError(error instanceof Error ? error.message : 'The backup could not be restored.');
     } finally {
-      setRestoring(false);
+      setSaving(false);
     }
   }
 
@@ -50,9 +75,23 @@ export default function WorkspaceData({
           Download unreadable original
         </button>}
         <form onSubmit={restore}>
-          <label>Choose backup file<input type="file" accept=".json,application/json" onChange={event => setBackup(event.target.files?.[0] ?? null)} disabled={restoring}/></label>
-          <label className="checkbox"><input type="checkbox" required/>Replace all current workspace records</label>
-          <button disabled={!backup || restoring}>{restoring ? 'Restoring…' : 'Restore backup'}</button>
+          <label>Choose backup file<input ref={fileInput} type="file" accept=".json,application/json"
+            onChange={event => void preview(event.target.files?.[0])} disabled={saving}/></label>
+          {reading && <p role="status">Reading backup…</p>}
+          {error && <p role="alert">{error}</p>}
+          {backup && <>
+            <div role="status">
+              <strong>{backup.name} ({backup.currency})</strong>
+              <p>Sales ({backup.jobs.length}), estimates ({backup.estimates.length}), expenses ({backup.expenses.length}),
+                {' '}services ({backup.services.length}), prepaid plans ({backup.plans.length}) and scenarios ({backup.scenarios.length}).</p>
+            </div>
+            <label className="checkbox"><input type="checkbox" checked={confirmed} disabled={saving}
+              onChange={event => setConfirmed(event.target.checked)}/>Replace all current workspace records with this backup</label>
+            <div className="actions">
+              <button disabled={!confirmed || saving}>{saving ? 'Restoring…' : 'Restore backup'}</button>
+              <button type="button" disabled={saving} onClick={clearSelection}>Cancel restore</button>
+            </div>
+          </>}
         </form>
         <button onClick={onSample}>Open sample workspace</button>
         <button onClick={onReset}>Reset workspace</button>

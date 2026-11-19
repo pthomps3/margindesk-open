@@ -1,0 +1,15 @@
+.scenario-comparison label { max-width: 26rem; }
+.comparison-values { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1.25rem; }
+.comparison-values > div { border: 1px solid #8c9e923d; border-radius: .5rem; padding: .9rem; }
+.comparison-values h4, .comparison-values dl { margin: 0; }
+.comparison-values dt { font-size: .83rem; margin-top: .8rem; }
+.comparison-values dd { margin: .25rem 0 0; font-weight: 650; }
+.scenario-comparison .entry-result strong { font-size: 1.1rem; line-height: 1.5; }
+.saved-scenarios ul { list-style: none; padding: 0; margin: 0; }
+.saved-scenarios li { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .8rem 0; border-bottom: 1px solid #8c9e923d; }
+.saved-scenarios li:last-child { border: 0; }
+.saved-scenarios li p { margin: .25rem 0; }
+@media (max-width: 520px) {
+  .comparison-values { grid-template-columns: 1fr; }
+  .saved-scenarios li { align-items: start; flex-wrap: wrap; }
+}

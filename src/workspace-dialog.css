@@ -1,0 +1,13 @@
+dialog.dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: calc(100% - 2rem);
+  color: inherit;
+  border: 0;
+}
+
+dialog.dialog::backdrop {
+  background: #142c2266;
+  backdrop-filter: blur(4px);
+}

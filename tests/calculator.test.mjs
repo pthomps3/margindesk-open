@@ -38,12 +38,15 @@ test('invalid amounts and excessive adjustments cannot produce results', () => {
   assert.equal(estimateJob({ ...job, supplies: '.29', fees: '1.' }).amounts.supplies, 29);
   assert.equal(estimateJob({ ...job, other: '' }).direct, 6013);
 });
-test('export reconciles with the displayed amounts and protects negative spreadsheet cells', () => {
+test('export preserves numeric losses and margin percentages for spreadsheet calculations', () => {
   const result = estimateJob({ ...job, price: '50' });
   const csv = estimateCSV(result, 'GBP');
   const rows = parseCSV(csv);
-  assert.deepEqual(rows.find(row => row[0] === 'Contribution profit'), ['Contribution profit', "'-15.13", 'GBP']);
+  assert.deepEqual(rows.find(row => row[0] === 'Contribution profit'), ['Contribution profit', '-15.13', 'GBP']);
+  assert.deepEqual(rows.find(row => row[0] === 'Contribution margin (%)'), ['Contribution margin (%)', '-30.3', '']);
   assert.deepEqual(rows.find(row => row[0] === 'Direct costs'), ['Direct costs', '65.13', 'GBP']);
+  const zero = parseCSV(estimateCSV(estimateJob({...job, price: '0'}), 'USD'));
+  assert.deepEqual(zero.find(row => row[0] === 'Contribution margin (%)'), ['Contribution margin (%)', 'N/A (zero revenue)', '']);
   assert.ok(csv.includes('Management estimate before fixed expenses'));
   assert.throws(() => estimateCSV(result, '=HYPERLINK("x")'));
 });

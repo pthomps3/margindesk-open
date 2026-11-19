@@ -12,8 +12,56 @@ export function jobTotals(j){
 }
 export function allocate(amount,start,end,from,to){const day=86400000;const s=Date.parse(start),e=Date.parse(end);if(!Number.isFinite(s)||!Number.isFinite(e)||e<s)throw Error('Invalid service period');const total=Math.round((e-s)/day)+1;const a=Math.max(0,Math.min(total,Math.round((Date.parse(from)-s)/day)));const b=Math.max(0,Math.min(total,Math.round((Date.parse(to)-s)/day)+1));return Math.round(amount*b/total)-Math.round(amount*a/total);}
 export function breakEven(fixed,price,direct){return price>direct?Math.ceil(fixed/(price-direct)):null;}
-export function expenseTotal(expenses,from,to){return expenses.reduce((a,e)=>{if(!e.recurring)return a+(e.date>=from&&e.date<=to?e.amount:0);const start=e.date>from?e.date:from,end=e.endDate&&e.endDate<to?e.endDate:to;if(start>end)return a;const s=new Date(start+'T00:00:00Z'),t=new Date(end+'T00:00:00Z');const months=(t.getUTCFullYear()-s.getUTCFullYear())*12+t.getUTCMonth()-s.getUTCMonth()+1;return a+months*e.amount;},0);}
-export function csvCell(v){let s=String(v??'');if(/^[\s]*[=+\-@\t\r]/.test(s))s="'"+s;return '"'+s.replaceAll('"','""')+'"';}
+function monthIndex(date) {
+  return Number(date.slice(0, 4)) * 12 + Number(date.slice(5, 7)) - 1;
+}
+
+function monthlyDueDate(index, anchorDay) {
+  const year = Math.floor(index / 12);
+  const month = index % 12 + 1;
+  const due = new Date(0);
+  due.setUTCFullYear(year, month, 0);
+  due.setUTCDate(Math.min(anchorDay, due.getUTCDate()));
+  return due.toISOString().slice(0, 10);
+}
+
+export function expensesForPeriod(expenses, from, to) {
+  const details = [];
+  for (const expense of expenses) {
+    const start = expense.date > from ? expense.date : from;
+    const end = expense.recurring && expense.endDate && expense.endDate < to ? expense.endDate : to;
+    if (start > end) continue;
+    if (!expense.recurring) {
+      if (expense.date >= from) details.push({expense, count: 1, firstDue: expense.date, lastDue: expense.date, periodAmount: expense.amount});
+      continue;
+    }
+
+    // Use the original day again after any month that had to be shortened.
+    const anchorDay = Number(expense.date.slice(8));
+    let firstMonth = monthIndex(start);
+    let lastMonth = monthIndex(end);
+    if (monthlyDueDate(firstMonth, anchorDay) < start) firstMonth++;
+    if (monthlyDueDate(lastMonth, anchorDay) > end) lastMonth--;
+    const count = lastMonth - firstMonth + 1;
+    if (count > 0) details.push({
+      expense, count,
+      firstDue: monthlyDueDate(firstMonth, anchorDay),
+      lastDue: monthlyDueDate(lastMonth, anchorDay),
+      periodAmount: count * expense.amount
+    });
+  }
+  return details;
+}
+
+export function expenseTotal(expenses, from, to) {
+  return expensesForPeriod(expenses, from, to).reduce((total, detail) => total + detail.periodAmount, 0);
+}
+export function csvCell(value) {
+ if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+ let text = String(value ?? '');
+ if (/^\s*[=+\-@\t\r\n＝＋－＠]/u.test(text)) text = "'" + text;
+ return '"' + text.replaceAll('"', '""') + '"';
+}
 export function parseCSV(text){
  if(text.length>500000)throw Error('CSV must be under 500 KB.');
  text=text.replace(/^\uFEFF/,'');let rows=[],row=[],cell='',quote=false,closed=false;
@@ -40,13 +88,17 @@ export function validateImport(rows,map,existing,duplicate='skip'){
   const optional=k=>val(k)===''?null:minor(val(k));
   const reference=val('reference'),date=val('date');
   if(!reference||reference.length>80)throw Error('Reference required (up to 80 characters)');
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(Date.parse(date))||new Date(date).toISOString().slice(0,10)!==date)throw Error('Use a valid YYYY-MM-DD date');
+  const isDate = value => /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0,10) === value;
+  if(!isDate(date))throw Error('Use a valid YYYY-MM-DD date');
+  const cash = optional('cash');
+  const cashDate = val('cashDate');
+  if (cashDate && (!isDate(cashDate) || !(cash > 0))) throw Error('A cash receipt date requires a positive cash amount and a valid YYYY-MM-DD date.');
   const hasRate=val('feeBps')!=='';const mode=val('feeMode');
   if(mode&&!['amount','rate'].includes(mode))throw Error('Fee method must be amount or rate.');
   if(mode==='rate'&&!hasRate)throw Error('Add the fee rate or choose an actual fee amount.');
   const j={reference,date,service:val('service')||'Imported work',price:minor(val('price')),discount:minor(val('discount')||'0'),refund:minor(val('refund')||'0'),
    supplies:optional('supplies'),labor:optional('labor'),other:optional('other'),vendorCost:optional('vendorCost'),vendor:val('vendor'),
-   feeMode:mode||(val('feeAmount')!==''?'amount':hasRate?'rate':'amount'),feeBps:hasRate?Number(val('feeBps')):0,feeAmount:optional('feeAmount'),fixedFee:minor(val('fixedFee')||'0'),cash:optional('cash'),
+   feeMode:mode||(val('feeAmount')!==''?'amount':hasRate?'rate':'amount'),feeBps:hasRate?Number(val('feeBps')):0,feeAmount:optional('feeAmount'),fixedFee:minor(val('fixedFee')||'0'),cash,cashDate:cashDate || null,
    ownerMinutes:val('ownerMinutes')===''?null:Number(val('ownerMinutes')),travelMinutes:val('travelMinutes')===''?0:Number(val('travelMinutes'))};
   if(!Number.isInteger(j.feeBps)||j.feeBps<0||j.feeBps>10000)throw Error('Fee basis points must be an integer from 0 to 10000');
   for(const k of ['ownerMinutes','travelMinutes'])if(j[k]!==null&&(!Number.isInteger(j[k])||j[k]<0||j[k]>100000))throw Error('Time must be whole minutes from 0 to 100,000');

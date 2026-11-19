@@ -20,11 +20,9 @@ export default function Landing({ onNavigate, onWorkspace }: { onNavigate: (page
   return <div className="landing-page">
     <section className="landing-hero">
       <div className="landing-hero-copy">
-        <span className="pricing-kicker"><span /> FOR THE BUSINESS YOU’RE BUILDING</span>
         <h1>See what each job<br />actually <em>earns.</em></h1>
-        <p className="landing-lead">You know what you charge.<br />Know what’s left, too.</p>
-        <p className="landing-description">Bring materials, product costs, worker pay, vendor costs, and fees into one clear picture. Understand each job’s contribution, spot your strongest services, and price your next job with confidence.</p>
-<div className="landing-actions"><button className="primary" onClick={()=>onWorkspace()}>Open free workspace <ArrowRight size={17}/></button><button className="landing-demo-link" onClick={()=>onWorkspace(true)}>Explore sample data <ArrowUpRight size={16}/></button></div>
+        <p className="landing-description">Track what each job earns after materials, worker pay, vendor costs, and fees. See where profit comes from and plan what to charge next.</p>
+<div className="landing-actions"><button className="primary" onClick={()=>onWorkspace()}>Open free workspace <ArrowRight size={17}/></button><button className="landing-demo-link" onClick={()=>onWorkspace(true)}>Explore sample workspace <ArrowUpRight size={16}/></button></div>
         <div className="landing-assurance"><Check size={13} /> Open source. No account required.</div>
       </div>
 
@@ -41,15 +39,15 @@ export default function Landing({ onNavigate, onWorkspace }: { onNavigate: (page
       </div>
     </section>
 
-    <div className="business-strip"><span>Made for hands-on businesses</span><span>Cleaning</span><i /><span>Laundry</span><i /><span>Home services</span><i /><span>Maintenance</span><i /><span>And your next idea</span></div>
+    <div className="business-strip"><span>Made for hands-on businesses</span><span>Cleaning</span><i /><span>Laundry</span><i /><span>Home services</span><i /><span>Maintenance</span></div>
 
     <section className="landing-workflow">
       <div className="section-heading"><span className="pricing-kicker"><span /> FROM COMPLETED WORK TO CLEAR NUMBERS</span><h2>A little less guessing.<br />A better feel for your business.</h2><p>Start with the work you already do. MarginDesk helps you see it clearly.</p></div>
       <div className="workflow-grid">{[
-        { number: '01', icon: Layers, title: 'Set up your services.', text: 'Add what you charge and what each job usually costs. Your supplies, worker pay, and fees are ready for the next entry.' },
-        { number: '02', icon: Receipt, title: 'Record a finished job.', text: 'Enter the completed work, adjust costs, and add any discount or refund. See its contribution profit as soon as you save.' },
-        { number: '03', icon: TrendingUp, title: 'Know what to do next.', text: 'Compare services, account for overhead, and explore how a different price or workload could change your results.' },
-      ].map(step => <article key={step.number}><div className="workflow-top"><span className="workflow-icon"><step.icon size={22} strokeWidth={1.5} /></span><span>{step.number}</span></div><h3>{step.title}</h3><p>{step.text}</p></article>)}</div>
+        { icon: Layers, title: 'Set up your services.', text: 'Add what you charge and what each job usually costs. Your supplies, worker pay, and fees are ready for the next entry.' },
+        { icon: Receipt, title: 'Record a finished job.', text: 'Enter the completed work, adjust costs, and add any discount or refund. See its contribution profit as soon as you save.' },
+        { icon: TrendingUp, title: 'Know what to do next.', text: 'Compare services, account for overhead, and explore how a different price or workload could change your results.' },
+      ].map(step => <article key={step.title}><div className="workflow-top"><span className="workflow-icon"><step.icon size={22} strokeWidth={1.5} /></span></div><h3>{step.title}</h3><p>{step.text}</p></article>)}</div>
     </section>
 
     <section className="landing-clarity">

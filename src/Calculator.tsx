@@ -1,4 +1,6 @@
-import { downloadText } from './download.mjs';
+import { estimateWorkbook } from './exportWorkbooks.mjs';
+import { workbookBlob } from './spreadsheets';
+import { downloadBlob, downloadText } from './download.mjs';
 import React, { useState } from 'react';
 import { ArrowRight, ArrowUpRight, Check, ChevronDown, Download, Info, Leaf, Receipt, RotateCcw, ShieldCheck, SlidersHorizontal } from 'lucide-react';
 import { estimateJob, estimateCSV } from './jobEstimate.mjs';
@@ -35,6 +37,7 @@ export default function Calculator({ onNavigate }: { onNavigate: (page: string) 
   const [sample, setSample] = useState<string | null>('Cleaning');
 
   const [exportStatus, setExportStatus] = useState('');
+  const [exporting, setExporting] = useState(false);
   const estimate = estimateJob(inputs);
   const money = (value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(value / 100);
   const symbol = new Intl.NumberFormat('en-US', { style: 'currency', currency }).formatToParts(0).find(part => part.type === 'currency')?.value || '$';
@@ -46,13 +49,20 @@ export default function Calculator({ onNavigate }: { onNavigate: (page: string) 
     setInputs(current => ({ ...current, [key]: value })); setSample(null); setExportStatus('');
   };
   const field = (name: keyof Inputs, hint: string) => <AmountField key={name} name={name} value={inputs[name]} hint={hint} symbol={symbol} error={estimate.errors[name]} onChange={change} />;
-  function downloadEstimate() {
-    if (!estimate.complete) return;
+  async function downloadEstimate(format: 'xlsx' | 'csv') {
+    if (!estimate.complete || exporting) return;
+    setExporting(true);
     try {
-      downloadText('margindesk-job-estimate.csv', estimateCSV(estimate, currency));
+      if (format === 'xlsx') {
+        downloadBlob('margindesk-job-estimate.xlsx', await workbookBlob(estimateWorkbook(estimate, currency)));
+      } else {
+        downloadText('margindesk-job-estimate.csv', estimateCSV(estimate, currency));
+      }
       setExportStatus('Estimate download started.');
     } catch {
       setExportStatus('Could not download the estimate. Try again.');
+    } finally {
+      setExporting(false);
     }
   }
 
@@ -112,7 +122,8 @@ export default function Calculator({ onNavigate }: { onNavigate: (page: string) 
             {costKeys.map(key => <span key={key} className={'calc-' + key} style={{ width: (estimate.amounts[key] / totalForBar * 100) + '%' }} />)}
             {estimate.profit > 0 && <span className="calc-contribution" style={{ width: (estimate.profit / totalForBar * 100) + '%' }} />}
           </div><div className="calc-bar-legend"><span><i className="calc-contribution" /> Contribution</span><span><i className="calc-labor" /> Direct costs</span></div></>}
-          <button className="calc-download" disabled={!estimate.complete} onClick={downloadEstimate}><Download size={14} /> Export this estimate <span>CSV</span></button>
+          <button className="calc-download" disabled={!estimate.complete || exporting} onClick={()=>void downloadEstimate('xlsx')}><Download size={14} /> Export estimate <span>XLSX</span></button>
+          <button type="button" className="calc-download" disabled={!estimate.complete || exporting} onClick={()=>void downloadEstimate('csv')}>Export estimate <span>CSV</span></button>
           {exportStatus && <small className="calc-export-status" role="status">{exportStatus}</small>}
         </div>
         <div className="calc-estimate-note"><Info size={15} /><p>A management estimate, before fixed expenses and taxes. It’s not take-home pay or cash received.</p></div>

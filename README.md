@@ -15,6 +15,10 @@ MarginDesk Open is a free, open-source job-costing and profit tracker for small 
 
 The downloaded app is free to run and needs no account, API key, or database. Workspace records stay in the browser where you enter them. You can use the full workspace online or run your own copy. The planned managed web workspace at MyMarginDesk.com is a separate $10/month offer.
 
+## Export files
+
+Use Excel for styled reports, job estimates, sales workbooks and import templates. Excel exports have typed dates and currency, wrapped headers and frozen rows. Calculation workbooks include editable formulas and saved results. The P&L workbook captures the selected period. Export a new report when you need a different period. CSV is available for data transfer. Keep JSON backups for restoring workspace data.
+
 ## Use the offline app
 
 Download the offline app above, extract the ZIP, then open **MarginDesk.html** in a desktop browser. The workspace, calculator, and spreadsheet tools run without an internet connection.

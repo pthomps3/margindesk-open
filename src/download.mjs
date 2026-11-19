@@ -1,7 +1,7 @@
 const csvType = 'text/csv;charset=utf-8';
 
 export function csvBlob(contents) {
-  return new Blob(['\uFEFF', contents], { type: csvType });
+  return new Blob(['\uFEFF', contents.replace(/^\uFEFF+/, '')], { type: csvType });
 }
 
 export function downloadBlob(filename, blob) {

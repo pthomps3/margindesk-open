@@ -54,6 +54,7 @@ export function sourceGroups(jobs){return [...new Map(jobs.filter(j=>j.source).m
 export function originalRows(jobs,sourceKey=''){
  const first=jobs.find(j=>j.source&&(!sourceKey||JSON.stringify([j.source.file,j.source.headers])===sourceKey));if(!first)return null;
  const matching=jobs.filter(j=>j.source?.file===first.source.file&&JSON.stringify(j.source.headers)===JSON.stringify(first.source.headers));
- return {name:first.source.file,rows:[first.source.headers,...matching.map(j=>{const values=[...j.source.values];for(const [k,index] of Object.entries(j.source.mapping||{})){if(index!==''&&importFields.includes(k))values[Number(index)]=j[k]==null?'':cents.has(k)?(j[k]/100).toFixed(2):String(j[k]);}return values;})],count:matching.length};
+ const fields=Object.fromEntries(Object.entries(first.source.mapping||{}).filter(([field,index])=>index!==''&&importFields.includes(field)).map(([field,index])=>[Number(index),field]));
+ return {name:first.source.file,fields,rows:[first.source.headers,...matching.map(j=>{const values=[...j.source.values];for(const [k,index] of Object.entries(j.source.mapping||{})){if(index!==''&&importFields.includes(k))values[Number(index)]=j[k]==null?'':cents.has(k)?(j[k]/100).toFixed(2):String(j[k]);}return values;})],count:matching.length};
 }
 export function targetPrice({cost,feeBps=0,fixedFee=0,margin=0}){const denominator=1-feeBps/10000-margin/100;return denominator>0?Math.ceil((cost+fixedFee)/denominator):null;}

@@ -4,6 +4,8 @@ import { validateWorkspace } from './validation.ts';
 export const workspaceKey = 'margindesk-open-workspace-v1';
 const format = 'margindesk-open-workspace';
 const maxBackupLength = 5_000_000;
+// Version 1 limits UTF-16 code units. Each code unit requires at most three UTF-8 bytes.
+const maxBackupFileBytes = maxBackupLength * 3;
 
 export function blankWorkspace() {
   return {
@@ -12,6 +14,7 @@ export function blankWorkspace() {
     businessType: 'service',
     setupComplete: false,
     services: [],
+    estimates: [],
     jobs: [],
     expenses: [],
     plans: [],
@@ -24,12 +27,17 @@ export function encodeWorkspace(workspace: unknown) {
 }
 
 export function decodeWorkspace(raw: string) {
-  if (raw.length > maxBackupLength) throw new Error('The backup is larger than 5 MB.');
+  if (raw.length > maxBackupLength) throw new Error('This backup exceeds the workspace size limit.');
   const backup = JSON.parse(raw);
   if (backup?.format !== format || backup.version !== 1) {
     throw new Error('Choose a MarginDesk Open workspace backup.');
   }
   return validateWorkspace(backup.workspace);
+}
+
+export async function readWorkspaceBackup(file: Blob) {
+  if (file.size > maxBackupFileBytes) throw new Error('This backup exceeds the workspace size limit.');
+  return decodeWorkspace(await file.text());
 }
 
 export function writeWorkspace(storage: Storage, workspace: unknown, expected: string | null) {
@@ -40,7 +48,14 @@ export function writeWorkspace(storage: Storage, workspace: unknown, expected: s
   if (storage.getItem(workspaceKey) !== expected) {
     throw new Error('This workspace changed in another tab. Reload before saving.');
   }
-  storage.setItem(workspaceKey, serialized);
+  try {
+    storage.setItem(workspaceKey, serialized);
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+      throw new Error('The browser could not save this change because its storage is full. Your previous records are still saved.');
+    }
+    throw error;
+  }
   return serialized;
 }
 

@@ -1,7 +1,7 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';
 import {jobTotals,validateImport,expenseTotal,parseCSV} from '../src/finance.mjs';
 import {estimateJob} from '../src/jobEstimate.mjs';
-import {jobRows,guessMapping,toCSV,reportFor,originalRows,targetPrice} from '../src/records.mjs';
+import {jobRows,guessMapping,importTemplateRows,toCSV,reportFor,reportRows,originalRows,targetPrice} from '../src/records.mjs';
 import {validateWorkspace} from '../src/validation.ts';
 import {validateExpenseImport} from '../src/expenseImport.mjs';
 import {workbookBlob,readWorkbook} from '../src/spreadsheets.ts';
@@ -49,4 +49,39 @@ test('an entered actual fee takes priority unless the imported method explicitly
 });
 test('negative values in a general expense file cannot silently become positive costs',()=>{
  const out=validateExpenseImport([['E-1','2026-10-30','Refund','-25']],{reference:'0',date:'1',name:'2',amount:'3'},[],'expenses');assert.match(out[0].error,/positive expense/);
+});
+
+test('every downloadable template passes the import preview', () => {
+ const sales = parseCSV(toCSV(importTemplateRows('jobs')));
+ const [sale] = validateImport(sales.slice(1), guessMapping(sales[0]), []);
+ assert.equal(sale.error, null);
+ assert.equal(sale.job.price, 12500);
+ assert.equal(sale.job.cashDate, '2026-11-03');
+ for (const kind of ['expenses', 'bank']) {
+  const rows = parseCSV(toCSV(importTemplateRows(kind)));
+  const [result] = validateExpenseImport(rows.slice(1), {reference:0,date:1,name:2,amount:3,vendor:4}, [], kind);
+  assert.equal(result.error, undefined);
+  assert.equal(result.skip, false);
+  assert.equal(result.expense.amount, 2500);
+ }
+});
+
+test('CSV distinguishes numeric values from formula-like text and preserves ordinary quoted fields', () => {
+ const rows = [['Number', 'Reference', 'Note'], [-25, '-00123', 'North, "main"\nCafé']];
+ const parsed = parseCSV(toCSV(rows));
+ assert.deepEqual(parsed[1], ['-25', "'-00123", 'North, "main"\nCafé']);
+});
+
+test('workbook sales and profit are numeric cells even when the business makes a loss', async () => {
+ const data = workspace();
+ data.jobs[0] = {...job, price: 100};
+ const report = reportRows(data, '2026-10-01', '2026-10-31');
+ const sales = jobRows(data.jobs);
+ const blob = await workbookBlob([{name:'Profit',rows:report}, {name:'Sales',rows:sales}]);
+ const {readSheet} = await import('read-excel-file/universal');
+ const buffer = await blob.arrayBuffer();
+ const profitSheet = await readSheet(buffer, 1);
+ const salesSheet = await readSheet(buffer, 2);
+ assert.equal(profitSheet.find(row => row[0].startsWith('Estimated operating profit'))[1], -64.13);
+ assert.equal(salesSheet[1][salesSheet[0].indexOf('Sale price')], 1);
 });

@@ -1,0 +1,8 @@
+.estimate-list { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr)); align-items: start; }
+.estimate-title { display: flex; align-items: start; justify-content: space-between; gap: 0.75rem; }
+.estimate-title h3, .estimate-title small { overflow-wrap: anywhere; }
+.estimate-title .pill { white-space: nowrap; }
+.estimate-amounts { display: grid; gap: 0.65rem; margin: 1rem 0; }
+.estimate-amounts > div { display: flex; justify-content: space-between; gap: 0.8rem; }
+.estimate-amounts dd { font-weight: 650; margin: 0; font-variant-numeric: tabular-nums; }
+.estimate-variance { font-weight: 600; }

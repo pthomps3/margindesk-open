@@ -17,3 +17,42 @@
 @media(max-width:800px){.setup-banner{display:block;padding:16px}.setup-banner .actions{margin-top:14px}.setup-banner .actions button{flex:1}.shell .stats{grid-template-columns:1fr 1fr}.shell .stat h2{font-size:23px}.shell .stat>span{font-size:12px}.shell .topbar{padding:12px;min-height:64px;height:auto}.shell .demo{max-width:140px;white-space:normal;font-size:10px}.preview-strip{align-items:flex-start;font-size:11px}.plan-grid,.landing-plan-grid{grid-template-columns:1fr!important}.dialog{max-height:94dvh}.dialog .formgrid{grid-template-columns:1fr}.dialog .primary,.import-panel>.primary{width:100%;min-height:48px}.auth{margin:20px auto}.auth h1{font-size:28px}.report-summary dl>div:last-child{font-size:16px}.shell .content{padding:20px 16px}.shell .toolbar{flex-wrap:wrap;font-size:12px}.shell .legend{display:none}}
 
 @media(max-width:800px){.shell .formgrid{grid-template-columns:minmax(0,1fr)}.shell main,.shell .content,.shell .card,.shell label{min-width:0}.shell .card{padding:22px 18px}.shell input,.shell select{max-width:100%;box-sizing:border-box}.shell .heading{gap:16px;flex-wrap:wrap}.publicnav{gap:14px;flex-wrap:wrap}.publicnav nav{flex-wrap:wrap;gap:8px}.auth{padding:24px 18px!important}.auth h1{line-height:1.2}}
+
+/* Independent controls leave room for neighboring keyboard focus rings. */
+.toolbar .period-selector {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .625rem;
+}
+.toolbar .period-selector > button {
+  min-height: 44px;
+  padding: .5rem .9rem;
+  font-size: .875rem;
+  white-space: nowrap;
+}
+.toolbar .period-selector > button[aria-pressed="true"] {
+  color: #124737;
+  background: #deeee3;
+  border-color: #549371;
+}
+[data-theme="dark"] .toolbar .period-selector > button[aria-pressed="true"] {
+  color: #d9f6e5;
+  background: #355644;
+  border-color: #9bccab;
+}
+.toolbar .period-selector > button:focus-visible {
+  outline-offset: 2px;
+}
+.publicnav nav .source-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: .45rem .75rem;
+  font-weight: 650;
+}
+.publicnav nav .source-link:hover {
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}

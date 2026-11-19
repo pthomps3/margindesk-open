@@ -2,7 +2,7 @@
 
 MarginDesk Open is a free, open-source job-costing and profit tracker for small service businesses. It grew out of the work of pricing jobs, tracking worker pay, and accounting for overhead at The Wrinkle Ninjas, a student-run laundry pickup business.
 
-[Open the full workspace online](https://pthomps3.github.io/margindesk-open/) · [Download the offline app](https://pthomps3.github.io/margindesk-open/margindesk-offline.zip) · [Try the calculator and sample at MyMarginDesk.com](https://mymargindesk.com/)
+[Open the local-data workspace in your browser](https://pthomps3.github.io/margindesk-open/) · [Download the offline app](https://pthomps3.github.io/margindesk-open/margindesk-offline.zip) · [Download source ZIP](https://github.com/pthomps3/margindesk-open/archive/refs/heads/main.zip)
 
 ## What you can do
 
@@ -13,7 +13,7 @@ MarginDesk Open is a free, open-source job-costing and profit tracker for small 
 - Preview imports from CSV or Excel and export reports and workspace backups.
 - Try a separate sample workspace with fictional records.
 
-The downloaded app is free to run and needs no account, API key, or database. Workspace records stay in the browser where you enter them. You can use the full workspace online or run your own copy. MyMarginDesk.com also offers a free calculator and sample workspace.
+The downloaded app is free to run and needs no account, API key, or database. Workspace records stay in the browser where you enter them. You can use the full workspace online or run your own copy. The planned managed web workspace at MyMarginDesk.com is a separate $10/month offer.
 
 ## Use the offline app
 

@@ -1,3 +1,4 @@
+import { downloadText } from './download.mjs';
 import {useRef,useState} from 'react';
 import {parseCSV,validateImport,jobTotals} from './finance.mjs';
 import {importFields,fieldLabels,guessMapping,importTemplateRows,toCSV} from './records.mjs';
@@ -20,12 +21,11 @@ export default function ImportPanel({data,save,notify}:any){
  function changeKind(k){version.current++;setKind(k);setBusy(false);setRows(null);setMap({});setError('');setConfirmed(false);setExcluded([]);}
  function sample() {
   const csv = toCSV(importTemplateRows(kind));
-  const url = URL.createObjectURL(new Blob([csv], {type: 'text/csv;charset=utf-8'}));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'mymargindesk-' + kind + '-template.csv';
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  try {
+    downloadText('mymargindesk-' + kind + '-template.csv', csv);
+  } catch {
+    notify('Could not download the template. Try again.');
+  }
  }
  return <section className="card formcard import-panel"><h2>Bring your records with you.</h2><p>Preview, correct, then import. Your original spreadsheet stays untouched.</p><div className="actions">{[['jobs','Sales / completed work'],['expenses','Expenses'],['bank','Bank statement']].map(([id,label])=><button key={id} aria-pressed={kind===id} onClick={()=>changeKind(id)}>{label}</button>)}</div>
  {kind==='bank'&&<div className="import-note"><b>Statement import · not a connected bank</b><p>Use negative amounts for money out and positive amounts for money in. Inflows are left out so deposits do not duplicate sales. Exclude transfers, loan payments, tax, inventory purchases already included in job costs, and other non-expenses before importing. </p></div>}

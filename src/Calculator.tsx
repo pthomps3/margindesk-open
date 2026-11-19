@@ -1,3 +1,6 @@
+import { estimateWorkbook } from './exportWorkbooks.mjs';
+import { workbookBlob } from './spreadsheets';
+import { downloadBlob, downloadText } from './download.mjs';
 import React, { useState } from 'react';
 import { ArrowRight, ArrowUpRight, Check, ChevronDown, Download, Info, Leaf, Receipt, RotateCcw, ShieldCheck, SlidersHorizontal } from 'lucide-react';
 import { estimateJob, estimateCSV } from './jobEstimate.mjs';
@@ -33,7 +36,8 @@ export default function Calculator({ onNavigate }: { onNavigate: (page: string) 
   const [currency, setCurrency] = useState('USD');
   const [sample, setSample] = useState<string | null>('Cleaning');
 
-  const [exported, setExported] = useState(false);
+  const [exportStatus, setExportStatus] = useState('');
+  const [exporting, setExporting] = useState(false);
   const estimate = estimateJob(inputs);
   const money = (value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(value / 100);
   const symbol = new Intl.NumberFormat('en-US', { style: 'currency', currency }).formatToParts(0).find(part => part.type === 'currency')?.value || '$';
@@ -42,13 +46,24 @@ export default function Calculator({ onNavigate }: { onNavigate: (page: string) 
   const totalForBar = estimate.complete ? Math.max(estimate.revenue, estimate.direct) : 0;
 
   const change = (key: keyof Inputs, value: string) => {
-    setInputs(current => ({ ...current, [key]: value })); setSample(null); setExported(false);
+    setInputs(current => ({ ...current, [key]: value })); setSample(null); setExportStatus('');
   };
   const field = (name: keyof Inputs, hint: string) => <AmountField key={name} name={name} value={inputs[name]} hint={hint} symbol={symbol} error={estimate.errors[name]} onChange={change} />;
-  function downloadEstimate() {
-    const url = URL.createObjectURL(new Blob(['\uFEFF' + estimateCSV(estimate, currency)], { type: 'text/csv;charset=utf-8' }));
-    const link = document.createElement('a'); link.href = url; link.download = 'margindesk-job-estimate.csv'; link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000); setExported(true);
+  async function downloadEstimate(format: 'xlsx' | 'csv') {
+    if (!estimate.complete || exporting) return;
+    setExporting(true);
+    try {
+      if (format === 'xlsx') {
+        downloadBlob('margindesk-job-estimate.xlsx', await workbookBlob(estimateWorkbook(estimate, currency)));
+      } else {
+        downloadText('margindesk-job-estimate.csv', estimateCSV(estimate, currency));
+      }
+      setExportStatus('Estimate download started.');
+    } catch {
+      setExportStatus('Could not download the estimate. Try again.');
+    } finally {
+      setExporting(false);
+    }
   }
 
   return <div className="calculator-page">
@@ -62,14 +77,14 @@ export default function Calculator({ onNavigate }: { onNavigate: (page: string) 
     <div className="calc-example-strip">
       <span><Leaf size={15} /> Try an example</span>
       <div className="calc-examples" role="group" aria-label="Synthetic job examples">{examples.map(example => <button key={example.name} aria-pressed={sample === example.name}
-        onClick={() => { setInputs({ ...example.values }); setCurrency('USD'); setSample(example.name); setExported(false); }}>{example.name}</button>)}</div>
+        onClick={() => { setInputs({ ...example.values }); setCurrency('USD'); setSample(example.name); setExportStatus(''); }}>{example.name}</button>)}</div>
       <span className="calc-example-note">Illustrative numbers. Make them your own.</span>
     </div>
 
     <div className="calc-workspace">
       <section className="calc-entry" aria-labelledby="calc-entry-title">
         <div className="calc-card-heading"><div><span className="calc-step">01 / THE JOB</span><h2 id="calc-entry-title">A few numbers. A clearer picture.</h2></div><Receipt size={22} /></div>
-        <div className="calc-entry-meta"><span>{sample ? sample + ' example · editable' : 'Your job estimate'}</span><label htmlFor="calc-currency">Currency<select id="calc-currency" aria-label="Currency" title="Choose a currency. Amounts are not converted." value={currency} onChange={event => { setCurrency(event.target.value); setSample(null); setExported(false); }}>{currencies.map(code => <option key={code}>{code}</option>)}</select></label></div>
+        <div className="calc-entry-meta"><span>{sample ? sample + ' example · editable' : 'Your job estimate'}</span><label htmlFor="calc-currency">Currency<select id="calc-currency" aria-label="Currency" title="Choose a currency. Amounts are not converted." value={currency} onChange={event => { setCurrency(event.target.value); setSample(null); setExportStatus(''); }}>{currencies.map(code => <option key={code}>{code}</option>)}</select></label></div>
         <div className="calc-fields">
           {field('price', 'What you charge for this job, before any discount or refund.')}
           <div className="calc-cost-heading"><span>What it costs to do the job</span><small>Enter 0 if a cost doesn’t apply.</small></div>
@@ -83,7 +98,7 @@ export default function Calculator({ onNavigate }: { onNavigate: (page: string) 
           <p>Fees stay as entered when you add a refund. Update them if your provider returns any fees. Empty optional fields count as 0.</p>
         </details>
         {Number(inputs.other) > 0 && !estimate.errors.other && <p className="calc-extra-note">Includes {money(estimate.amounts.other)} in other direct costs. Edit above.</p>}
-        <div className="calc-entry-footer"><span><ShieldCheck size={14} /> Entries stay on this page. Export to keep a copy.</span><button onClick={() => { setInputs({ ...empty }); setSample(null); setExported(false); }}><RotateCcw size={13} /> Clear</button></div>
+        <div className="calc-entry-footer"><span><ShieldCheck size={14} /> Entries stay on this page. Export to keep a copy.</span><button onClick={() => { setInputs({ ...empty }); setSample(null); setExportStatus(''); }}><RotateCcw size={13} /> Clear</button></div>
       </section>
 
       <section id="calc-results" className={'calc-results ' + (loss ? 'calc-loss' : '')} aria-labelledby="calc-result-title">
@@ -107,8 +122,9 @@ export default function Calculator({ onNavigate }: { onNavigate: (page: string) 
             {costKeys.map(key => <span key={key} className={'calc-' + key} style={{ width: (estimate.amounts[key] / totalForBar * 100) + '%' }} />)}
             {estimate.profit > 0 && <span className="calc-contribution" style={{ width: (estimate.profit / totalForBar * 100) + '%' }} />}
           </div><div className="calc-bar-legend"><span><i className="calc-contribution" /> Contribution</span><span><i className="calc-labor" /> Direct costs</span></div></>}
-          <button className="calc-download" disabled={!estimate.complete} onClick={downloadEstimate}><Download size={14} /> Export this estimate <span>CSV</span></button>
-          {exported && <small className="calc-export-status" role="status">Your estimate download is ready.</small>}
+          <button className="calc-download" disabled={!estimate.complete || exporting} onClick={()=>void downloadEstimate('xlsx')}><Download size={14} /> Export estimate <span>XLSX</span></button>
+          <button type="button" className="calc-download" disabled={!estimate.complete || exporting} onClick={()=>void downloadEstimate('csv')}>Export estimate <span>CSV</span></button>
+          {exportStatus && <small className="calc-export-status" role="status">{exportStatus}</small>}
         </div>
         <div className="calc-estimate-note"><Info size={15} /><p>A management estimate, before fixed expenses and taxes. It’s not take-home pay or cash received.</p></div>
       </section>

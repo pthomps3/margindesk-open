@@ -1,3 +1,4 @@
+import { renderExportWorkbook } from './workbookExport.mjs';
 import {inspectWorkbookZip} from './workbookSafety.mjs';
 
 async function inspectSheets(buffer: ArrayBuffer) {
@@ -77,13 +78,11 @@ export async function readWorkbook(file: File) {
   return rows;
 }
 
-export async function workbookBlob(sheets: {name: string; rows: (string | number | null)[][]}[]) {
-  const {default: writeExcel} = await import('write-excel-file/universal');
-  return writeExcel(sheets.map(({name, rows}) => ({
-    sheet: name, stickyRowsCount: 1,
-    columns: (rows[0] || []).map(() => ({width: 28})),
-    data: rows.map((row, index) => row.map(value => typeof value === 'number'
-      ? {type: Number, value, fontWeight: index === 0 ? 'bold' as const : undefined}
-      : {type: String, value: String(value ?? ''), fontWeight: index === 0 ? 'bold' as const : undefined}))
-  }))).toBlob();
+type ExportSheet = Parameters<typeof renderExportWorkbook>[0][number];
+
+export async function workbookBlob(sheets: ExportSheet[]) {
+  const [{ default: writeExcel }, pack] = await Promise.all([
+    import('write-excel-file/universal'), import('fflate'),
+  ]);
+  return renderExportWorkbook(sheets, writeExcel, pack);
 }
